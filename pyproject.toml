@@ -1,0 +1,91 @@
+[project]
+name = "binance-futures-grid-intelligence"
+version = "0.1.0"
+description = "Read-only directional-grid decision support for Binance USDⓈ-M USDT-margined perpetuals"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+# 依赖选择见 docs/02-ARCHITECTURE.md §2 与 ADR-0001/0002：
+# - fastapi/pydantic/httpx/apscheduler/structlog 是 docs/02 指定的技术栈，沿用。
+# - numpy/pandas/TA-Lib 未引入：ADR-0002 决定指标内核走纯标准库（可单测、无二进制依赖、2C2G 友好）。
+# - prometheus_client 等观测依赖由 OPS-002 引入，不在 SYS-002 预先拉取。
+dependencies = [
+  "apscheduler>=3.10,<4",
+  "fastapi>=0.115,<0.120",
+  "httpx>=0.27,<0.29",
+  "pydantic>=2.9,<3",
+  "structlog>=24.1,<26",
+  "uvicorn>=0.30,<0.40",
+]
+
+[dependency-groups]
+dev = [
+  "mypy>=1.11,<2",
+  "pytest>=8.3,<9",
+  "ruff>=0.6,<0.12",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# 只有一个可安装包（ADR-0001）；apps/* 是进程入口，不作为包发布，由 pytest pythonpath 提供导入。
+packages = ["bfgi"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "architecture: 结构与依赖方向约束测试（ADR-0001/0009）",
+  "contract: 输出契约一致性测试（ADR-0006）",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["bfgi", "apps", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "A",   # flake8-builtins：避免覆盖内置名
+  "ARG",
+  "B",
+  "C4",
+  "E",
+  "F",
+  "I",   # isort
+  "N",
+  "PT",
+  "RET",
+  "RUF",
+  "S",
+  "SIM",
+  "TID",
+  "UP",
+  "W",
+]
+
+# 中文注释按仓库约定使用全角标点；把常用全角标点列入 allowed-confusables，
+# 保留 RUF001/002/003 对真正的混淆字符（如西里尔字母同名形）的拦截。
+allowed-confusables = ["–", "（", "）", "，", "：", "；"]
+
+[tool.ruff.lint.per-file-ignores]
+# ADR-0009 的源码扫描测试与只读负例测试需要以字符串形式写出被禁止的 token。
+"tests/**" = ["S101", "S105"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "."
+# apps/ 的最小入口由 SYS-004 引入（ADR-0012），完整 API 面仍归 API-001。
+packages = ["bfgi", "apps"]
+
+[[tool.mypy.overrides]]
+module = ["apscheduler.*"]
+ignore_missing_imports = true

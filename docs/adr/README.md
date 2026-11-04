@@ -16,6 +16,7 @@ AGENTS.md §3 要求：与三套参考 skill 的冲突按**更严格的风险边
 | 0009 | 只读边界是架构不变量 | Accepted | 无签名客户端、无 API key 配置项、公共端点白名单 CI 扫描、API/前端无下单入口负例测试 | AGENTS.md §6 → 结构性约束而非配置开关 |
 | 0010 | SQLite WAL + 编号 SQL migration | Accepted | 标准库 `sqlite3`，无 ORM/Alembic；编号 up/down SQL + `schema_migrations`；repository Protocol 预留 Postgres；价格 TEXT、时间 ISO-8601 UTC | docs/02 未指定库 → 最小依赖 + 可移植接口 |
 | 0011 | 版本身份与失败归因 | Accepted | `strategy_version` + `git_commit` + `market_data_hash` 必填；血缘链贯穿；失败必须记单一 primary cause 后才允许改参数 | docs/06 + grid-decision 归因要求 → 落成枚举 |
+| 0012 | API 入口位置、Settings 注入与错误信封 | Accepted | apps/api 唯一 HTTP 入口；配置构造期读一次并缓存 + Depends 注入；信封 {error:{code,message,request_id}}；状态映射表在 apps/；交易意图 404 非 403 | ADR-0001/0009 边界细化，无新冲突 |
 
 ## 使用说明
 
